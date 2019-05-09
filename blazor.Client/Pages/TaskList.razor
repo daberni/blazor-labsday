@@ -1,0 +1,93 @@
+﻿@page "/tasklist"
+@using blazor.Shared
+@inject HttpClient Http
+
+<h1>Tasks</h1>
+
+<p>This component demonstrates fetching data from the server (again).</p>
+
+@if (tasks == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <tbody>
+            @foreach (var task in tasks)
+            {
+                <tr>
+                    <td><input type="checkbox" checked="@(task.Done)" id="task@(task.Id)" onchange="@(e => UpdateTask(e, task))" /></td>
+                    <td><label for="task@(task.Id)">@task.Text</label></td>
+                    <td><a class="btn btn-danger" onclick="@(e => Delete(task))"><i class="oi oi-trash text-white"></i></a></td>
+                </tr>
+            }
+            <tr>
+                <td></td>
+                <td>
+                    <form onsubmit="@HandleValidSubmit" >
+                        <input type="text" bind="@newTask" />
+                    </form>
+                    @*
+                    <EditForm Model="@newTask" OnValidSubmit="@HandleValidSubmit">
+                        <InputText bind-value="@newTask" id="newtask" />
+                        <ValidationMessage For="@(() => newTask)" />
+                        <ValidationSummary />
+                    </EditForm>
+                    *@
+                </td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+}
+
+@functions {
+    string newTask;
+    IList<TaskEntity> tasks;
+
+    protected override async Task OnInitAsync()
+    {
+        tasks = await Http.GetJsonAsync<IList<TaskEntity>>("api/Task");
+    }
+
+    private async Task UpdateTask(UIChangeEventArgs e, TaskEntity task)
+    {
+        await Http.PostJsonAsync($"api/Task/{task.Id}", new TaskEntity
+        {
+            Id = task.Id,
+            Text = task.Text,
+            Done = !task.Done
+        });
+
+        tasks = null; // no idea why this is necessary
+        tasks = (await Http.GetJsonAsync<IList<TaskEntity>>("api/Task")).ToList();
+    }
+
+    private async Task Delete(TaskEntity task)
+    {
+        await Http.DeleteAsync($"api/Task/{task.Id}");
+
+        tasks = null; // no idea why this is necessary
+        tasks = (await Http.GetJsonAsync<IList<TaskEntity>>("api/Task")).ToList();
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        await Http.PutJsonAsync("api/Task", new TaskEntity
+        {
+            Text = newTask
+        });
+
+        newTask = null;
+        tasks = null; // no idea why this is necessary
+        tasks = (await Http.GetJsonAsync<IList<TaskEntity>>("api/Task")).ToList();
+    }
+
+    protected override bool ShouldRender()
+    {
+        bool shouldRender = base.ShouldRender();
+        Console.WriteLine(shouldRender);
+        return shouldRender;
+    }
+}

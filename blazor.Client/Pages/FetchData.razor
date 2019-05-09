@@ -1,5 +1,6 @@
 ﻿@page "/fetchdata"
 @using blazor.Shared
+@implements IDisposable
 @inject HttpClient Http
 
 <h1>Weather forecast</h1>
@@ -36,10 +37,20 @@ else
 }
 
 @functions {
+    private System.Threading.Timer timer;
     WeatherForecast[] forecasts;
 
     protected override async Task OnInitAsync()
     {
-        forecasts = await Http.GetJsonAsync<WeatherForecast[]>("api/SampleData/WeatherForecasts");
+        timer = new System.Threading.Timer(new System.Threading.TimerCallback(async _ =>
+        {
+            forecasts = await Http.GetJsonAsync<WeatherForecast[]>("api/SampleData/WeatherForecasts");
+            this.StateHasChanged();
+        }), null, 0, 1000);
+    }
+
+    public void Dispose()
+    {
+        timer.Dispose();
     }
 }

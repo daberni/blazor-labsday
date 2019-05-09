@@ -1,3 +1,4 @@
+using blazor.Server.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.ResponseCompression;
@@ -20,6 +21,7 @@ namespace blazor.Server
                 opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
                     new[] { "application/octet-stream" });
             });
+            services.AddDbContext<TaskContext>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
